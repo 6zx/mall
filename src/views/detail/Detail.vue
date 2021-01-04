@@ -1,8 +1,12 @@
 <template>
   <div id="detail">
-    <detail-nav-bar></detail-nav-bar>
-    <detail-swiper :topImages="topImages"></detail-swiper>
-    <detail-base-info :goods="goods"></detail-base-info>
+    <detail-nav-bar class="detail-nav"></detail-nav-bar>
+    <scroll class="content" ref="scroll">
+      <detail-swiper :topImages="topImages"></detail-swiper>
+      <detail-base-info :goods="goods"></detail-base-info>
+      <detail-shop-info :shop="shop"></detail-shop-info>
+      <detail-goods-info :detail-info="detailInfo" @imageLoad="imageLoad"></detail-goods-info>
+    </scroll>
   </div>
 </template>
 
@@ -10,6 +14,10 @@
   import DetailNavBar from './childComps/DetailNavBar'
   import DetailSwiper from './childComps/DetailSwiper'
   import DetailBaseInfo from './childComps/DetailBaseInfo'
+  import DetailShopInfo from './childComps/DetailShopInfo'
+  import DetailGoodsInfo from './childComps/DetailGoodsInfo'
+
+  import Scroll from 'components/common/scroll/Scroll'
 
   import {getDetail, Goods, Shop} from 'network/detail'
 
@@ -18,14 +26,18 @@
     components: {
       DetailNavBar,
       DetailSwiper,
-      DetailBaseInfo
+      DetailBaseInfo,
+      DetailShopInfo,
+      DetailGoodsInfo,
+      Scroll
     },
     data() {
       return {
         iid: null,
         topImages: [],
         goods: {},
-        shop: {}
+        shop: {},
+        detailInfo: {}
       }
     },
     created() {
@@ -44,6 +56,9 @@
 
       //   // 2.3 获取店铺信息
       //   this.shop = new Shop(res.result.shopInfo);
+
+      // // 2.4 保存商品的详情数据
+      // this.detailInfo = res.result.detailInfo;
       // })
 
       let imgs = [
@@ -68,7 +83,7 @@
         ret.result.itemInfo = {};
         ret.result.itemInfo.topImages = imgs[Math.round(Math.random() * 2)];
 
-        ret.result.itemInfo.title = '【周国平-爱与孤独】家里养的❀自杀了，遗书写到：一生不愁吃穿，唯独缺少阳光爱';
+        ret.result.itemInfo.title = '【周国平-爱与孤独】家里养的❀自杀了，遗书写到：一生不愁吃穿，唯独缺少阳光和爱';
         ret.result.itemInfo.desc = '新款上市';
         ret.result.itemInfo.price = 109;
         ret.result.itemInfo.oldPrice = 129;
@@ -77,18 +92,33 @@
         ret.result.columns = ['销量 3876', '收藏 533', '默认快递'];
         ret.result.shopInfo = {};
         ret.result.shopInfo.services = [
-          {name: '退货补运费', icon: '#'}, {name: '全国包邮', icon: '#'}, {name: '7天无理由退换货', icon: '#'}, {name: '72小时包邮', icon: '#'}
+          {name: '退货补运费', icon: '#'}, {name: '全国包邮', icon: '#'}, {name: '7天无理由退换货', icon: '#'}, {name: '72小时发货', icon: '#'}
           ];
         ret.result.shopInfo.shopLogo = 'https://gimg2.baidu.com/image_search/src=http%3A%2F%2Fc-ssl.duitang.com%2Fuploads%2Fitem%2F202003%2F08%2F20200308002234_jsoqx.thumb.400_0.jpeg&refer=http%3A%2F%2Fc-ssl.duitang.com&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=jpeg?sec=1611841768&t=d24bb628b80103967b6ec4e4792f8caf';
         ret.result.shopInfo.name = '来时';
         ret.result.shopInfo.cFans = 10090;
-        ret.result.shopInfo.Goods = 99;
+        ret.result.shopInfo.cGoods = 99;
         ret.result.shopInfo.cSells = 57876;
-        ret.result.shopInfo.scroe = [
-          {isBetter: false, name: '描述相符', scroe: 4.64},
-          {isBetter: true, name: '价格合理', scroe: 5},
-          {isBetter: false, name: '质量满意', scroe: 4.62}
-        ]
+        ret.result.shopInfo.score = [
+          {isBetter: false, name: '描述相符', score: 4.64},
+          {isBetter: true, name: '价格合理', score: 5},
+          {isBetter: false, name: '质量满意', score: 4.62}
+        ];
+        ret.result.detailInfo = {
+          desc: "我漂泊了许多年，时间长得，让我忘记了我还有灵魂——荣格【红书】",
+          detailImage: [{
+            anchor: "model_img",
+            desc: "",
+            key: "穿着效果",
+            list: [
+              'https://images.pexels.com/photos/3030506/pexels-photo-3030506.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500',
+              'https://images.pexels.com/photos/5715253/pexels-photo-5715253.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500',
+              'https://images.pexels.com/photos/5850442/pexels-photo-5850442.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500',
+              'https://images.pexels.com/photos/4627741/pexels-photo-4627741.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500',
+              'https://images.pexels.com/photos/5799683/pexels-photo-5799683.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500'
+            ]
+          }]
+        }
 
         return ret
       }
@@ -102,10 +132,33 @@
 
       // 2.3 获取店铺信息
       this.shop = new Shop(res.result.shopInfo);
+
+      // 2.4 保存商品的详情数据
+      this.detailInfo = res.result.detailInfo;
+    },
+    methods: {
+      imageLoad() {
+        this.$refs.scroll.refresh();
+      }
     }
   }
 </script>
 
 <style scoped>
-  
+  #detail {
+    position: relative;
+    z-index: 9;
+    background-color: #fff;
+    height: 100vh;
+  }
+
+  .detail-nav {
+    position: relative;
+    z-index: 9;
+    background-color: #fff;
+  }
+
+  .content {
+    height: calc(100% - 44px);
+  }
 </style>
