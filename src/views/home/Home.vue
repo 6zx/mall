@@ -26,7 +26,7 @@
     import BackTop from 'components/content/backTop/BackTop'
 
     import {getHomeMultidata, getHomeGoods} from 'network/home'
-    import {debounce} from 'common/utils'
+    import {itemListenerMinin} from 'common/mixin'
 
     export default {
         name: 'Home',
@@ -40,6 +40,7 @@
             Scroll,
             BackTop
         },
+        mixins: [itemListenerMinin],
         data() {
             return {
                 banners: [],
@@ -53,7 +54,8 @@
                 isShowBack: false,
                 tabOffsetTop: 0,
                 isFixed: false,
-                scrollY: 0
+                scrollY: 0,
+                itemImgListener: null
             }
         },
         computed: {
@@ -71,11 +73,6 @@
             this.getHomeGoods('sell');
         },
         mounted() {
-            // 监听事件总线的itemImageLoad事件
-            const refresh = debounce(this.$refs.scroll.refresh, 500);
-            this.$bus.$on('itemImageLoad', () => {
-                refresh();
-            });
         },
         activated() {
             // console.log('activated');
@@ -83,8 +80,11 @@
             this.$refs.scroll.refresh();
         },
         deactivated() {
-            // console.log('deactivated');
+            // 保存离开时的位置
             this.scrollY = this.$refs.scroll.getScrollY();
+
+            // 取消监听的某个全局事件
+            this.$bus.$off('itemImageLoad', this.itemImgListener)
         },
         destroyed() {
             console.log('destroyed');
