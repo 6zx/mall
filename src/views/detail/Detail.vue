@@ -1,15 +1,17 @@
 <template>
   <div id="detail">
-    <detail-nav-bar class="detail-nav"></detail-nav-bar>
-    <scroll class="content" ref="scroll">
+    <detail-nav-bar class="detail-nav" @titleClick="titleClick" ref="nav"></detail-nav-bar>
+    <scroll class="content" ref="scroll" :probe-type="3" @scroll="contentScroll">
       <detail-swiper :topImages="topImages"></detail-swiper>
       <detail-base-info :goods="goods"></detail-base-info>
       <detail-shop-info :shop="shop"></detail-shop-info>
       <detail-goods-info :detail-info="detailInfo" @imageLoad="imageLoad"></detail-goods-info>
-      <detail-param-info :param-info="paramInfo"></detail-param-info>
-      <detail-comment-info :comment-info="commentInfo"></detail-comment-info>
-      <goods-list :goods="recommends"></goods-list>
+      <detail-param-info :param-info="paramInfo" ref="params"></detail-param-info>
+      <detail-comment-info :comment-info="commentInfo" ref="comment"></detail-comment-info>
+      <goods-list :goods="recommends" ref="recommends"></goods-list>
     </scroll>
+    <detail-bottom-bar></detail-bottom-bar>
+    <back-top @click.native="backClick" v-show="isShowBack"></back-top>
   </div>
 </template>
 
@@ -21,12 +23,14 @@
   import DetailGoodsInfo from './childComps/DetailGoodsInfo'
   import DetailParamInfo from './childComps/DetailParamInfo'
   import DetailCommentInfo from './childComps/DetailCommentInfo'
+  import DetailBottomBar from './childComps/DetailBottomBar'
 
   import Scroll from 'components/common/scroll/Scroll'
   import GoodsList from 'components/content/goods/GoodsList'
 
   import {getDetail, Goods, Shop, GoodsParam, getRecommend} from 'network/detail'
-  import {itemListenerMinin} from 'common/mixin'
+  import {itemListenerMinin, backTopMixin} from 'common/mixin'
+  import {debounce} from 'common/utils'
 
   export default {
     name: 'Detail',
@@ -39,9 +43,10 @@
       DetailParamInfo,
       DetailCommentInfo,
       Scroll,
-      GoodsList
+      GoodsList,
+      DetailBottomBar
     },
-    mixins: [itemListenerMinin],
+    mixins: [itemListenerMinin, backTopMixin],
     data() {
       return {
         iid: null,
@@ -52,7 +57,10 @@
         paramInfo: {},
         commentInfo: {},
         recommends: [],
-        itemImgListener: null
+        itemImgListener: null,
+        themeTopYs: [],
+        getThemeTopY: null,
+        currentIndex: 0,
       }
     },
     created() {
@@ -261,8 +269,22 @@
       }
       let res2 = makeFakeData2();
       this.recommends = res2.data.list;
+
+
+      // 4. 给getThemeTopY赋值
+      this.getThemeTopY = debounce(() => {
+        this.themeTopYs = [];
+        this.themeTopYs.push(0);
+        this.themeTopYs.push(this.$refs.params.$el.offsetTop);
+        this.themeTopYs.push(this.$refs.comment.$el.offsetTop);
+        this.themeTopYs.push(this.$refs.recommends.$el.offsetTop);
+
+        this.themeTopYs.push(Number.MAX_VALUE)
+
+        console.log(this.themeTopYs);
+      })
     },
-    mounted(){
+    mounted(){ 
     },
     destroyed() {
       this.$bus.$off('itemImageLoad', this.itemImgListener)
@@ -270,6 +292,30 @@
     methods: {
       imageLoad() {
         this.$refs.scroll.refresh();
+
+        this.themeTopYs = [];
+        this.themeTopYs.push(0);
+        this.themeTopYs.push(this.$refs.params.$el.offsetTop);
+        this.themeTopYs.push(this.$refs.comment.$el.offsetTop);
+        this.themeTopYs.push(this.$refs.recommends.$el.offsetTop);
+      },
+      titleClick(index) {
+        this.$refs.scroll.scrollTo(0, -this.themeTopYs[index], 200)
+      },
+      contentScroll(position) {
+        let positionY = -position.y;
+        let length = this.themeTopYs.length;
+
+        for (let i=0; i<length-1; i++) {
+          if (this.currentIndex !== i && (positionY >= this.themeTopYs[i] && positionY < this.themeTopYs[i+1])) {
+            this.currentIndex = i;
+            console.log(this.currentIndex)
+            this.$refs.nav.currentIndex = this.currentIndex;
+          }
+        }
+
+        // 判断是否显示backTop组件
+        this.isShowBack = (-position.y) > 1000;
       }
     }
   }
@@ -290,6 +336,6 @@
   }
 
   .content {
-    height: calc(100% - 44px);
+    height: calc(100% - 44px - 58px);
   }
 </style>

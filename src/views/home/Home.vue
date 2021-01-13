@@ -23,10 +23,9 @@
     import TabControl from 'components/content/tabControl/TabControl'
     import GoodsList from 'components/content/goods/GoodsList'
     import Scroll from 'components/common/scroll/Scroll'
-    import BackTop from 'components/content/backTop/BackTop'
 
     import {getHomeMultidata, getHomeGoods} from 'network/home'
-    import {itemListenerMinin} from 'common/mixin'
+    import {itemListenerMinin, backTopMixin} from 'common/mixin'
 
     export default {
         name: 'Home',
@@ -37,10 +36,9 @@
             FeatureView,
             TabControl,
             GoodsList,
-            Scroll,
-            BackTop
+            Scroll
         },
-        mixins: [itemListenerMinin],
+        mixins: [itemListenerMinin, backTopMixin],
         data() {
             return {
                 banners: [],
@@ -51,7 +49,6 @@
                     'sell': {page: 0, list: []}
                 },
                 currentType: 'pop',
-                isShowBack: false,
                 tabOffsetTop: 0,
                 isFixed: false,
                 scrollY: 0,
@@ -154,9 +151,6 @@
                 }
                 this.$refs.tabControl1.currentIndex = index;
                 this.$refs.tabControl2.currentIndex = index;
-            },
-            backClick() {
-                this.$refs.scroll.scrollTo(0, 0, 500);
             },
             contentScroll(position) {
                 // 判断是否显示backTop组件
