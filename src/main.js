@@ -1,12 +1,19 @@
 import Vue from 'vue'
 import App from './App.vue'
 import router from './router'
+import store from './store'
 
 import {formatDate} from 'common/utils'
 
+import toast from 'components/common/toast'
+
 Vue.config.productionTip = false
 
+// 添加事件总线对象
 Vue.prototype.$bus = new Vue();
+
+// 添加事件总线对象
+Vue.use(toast)
 
 // 源代码写在DetailShopInfo.vue中报错，改为全局的
 Vue.filter('sellCountFilter', function(value) {
@@ -21,5 +28,6 @@ Vue.filter('showDate', function (value) {
 
 new Vue({
   router,
-  render: h => h(App)
+  render: h => h(App),
+  store
 }).$mount('#app')
